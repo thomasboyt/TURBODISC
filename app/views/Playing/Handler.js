@@ -52,6 +52,17 @@ const Playing = React.createClass({
     ctx.closePath();
   },
 
+  drawScore(ctx) {
+    ctx.fillStyle = 'black';
+    ctx.font = '20px sans-serif';
+
+    ctx.textAlign = 'left';
+    ctx.fillText(this.props.leftPlayer.score, 20, 20);
+
+    ctx.textAlign = 'right';
+    ctx.fillText(this.props.rightPlayer.score, WIDTH - 20, 20);
+  },
+
   renderCanvas(ctx) {
     ctx.fillStyle = '#ccc';
 
@@ -62,6 +73,8 @@ const Playing = React.createClass({
     if (this.props.turbodisc.held === null) {
       this.drawDisc(ctx, this.props.turbodisc);
     }
+
+    this.drawScore(ctx);
   },
 
   render() {

@@ -7,6 +7,7 @@ import {
 } from '../ActionTypes';
 
 import {
+  WIDTH,
   HEIGHT,
   PLAYER_SIZE,
   DISC_SIZE,
@@ -35,6 +36,7 @@ const Player = I.Record({
   y: null,
   side: null,
   justThrew: false,
+  score: 0,
 });
 
 const Turbodisc = I.Record({
@@ -116,6 +118,13 @@ function getCollisionParams(player) {
   };
 }
 
+function scoreFor(state, playerKey) {
+  const otherPlayer = playerKey === PLAYER_LEFT ? PLAYER_RIGHT : PLAYER_LEFT;
+  return state
+    .updateIn([playerKey, 'score'], (score) => score + 1)
+    .setIn(['turbodisc', 'held'], otherPlayer);
+}
+
 function updateDiscPosition(state, dt) {
   return state
     .update('turbodisc', (disc) => {
@@ -159,6 +168,14 @@ function updateDiscPosition(state, dt) {
 
         return state
           .setIn(['turbodisc', 'held'], PLAYER_LEFT);
+
+      } else if ((disc.x + DISC_SIZE) < 0) {
+        // right player scored
+        return scoreFor(state, PLAYER_RIGHT);
+
+      } else if ((disc.x - DISC_SIZE) > WIDTH) {
+        // left player scored
+        return scoreFor(state, PLAYER_LEFT);
 
       } else {
         // Unset justThrew flag once the disc is out of collision box

@@ -8,7 +8,14 @@ import {
 
 import {
   HEIGHT,
+  PLAYER_SIZE,
+  DISC_SIZE,
 } from '__root/app/constants';
+
+import {
+  boundingBoxIntersecting,
+  calcVector,
+} from '__root/app/util/math';
 
 export const PLAYER_LEFT = 'leftPlayer';
 export const PLAYER_RIGHT = 'rightPlayer';
@@ -27,6 +34,7 @@ const Player = I.Record({
   x: null,
   y: null,
   side: null,
+  justThrew: false,
 });
 
 const Turbodisc = I.Record({
@@ -55,14 +63,8 @@ const State = I.Record({
   }),
 });
 
-const PLAYER_SPEED = 5;
+const PLAYER_SPEED = 10;
 const INITIAL_DISC_SPEED = 15;
-
-function calcVector(magnitude, rad) {
-  var x = magnitude * Math.cos(rad);
-  var y = magnitude * Math.sin(rad);
-  return { x: x, y: y };
-}
 
 function movePlayer(state, dt, playerKey, angle) {
   const speed = PLAYER_SPEED * dt;
@@ -97,22 +99,74 @@ function throwDisc(state, dt, playerKey, angle) {
     .setIn(['turbodisc', 'held'], null)
     .setIn(['turbodisc', 'x'], player.x)
     .setIn(['turbodisc', 'y'], player.y)
-    .mergeIn(['turbodisc', 'vec'], vec);
+    .mergeIn(['turbodisc', 'vec'], vec)
+    .setIn([playerKey, 'justThrew'], true);
+}
+
+function getCollisionParams(player) {
+  return {
+    center: {
+      x: player.x,
+      y: player.y,
+    },
+    size: {
+      x: PLAYER_SIZE,
+      y: PLAYER_SIZE,
+    }
+  };
 }
 
 function updateDiscPosition(state, dt) {
-  return state.update('turbodisc', (disc) => {
-    const x = disc.x + (disc.vec.x * dt);
-    const y = disc.y + (disc.vec.y * dt);
+  return state
+    .update('turbodisc', (disc) => {
+      const x = disc.x + (disc.vec.x * dt);
+      const y = disc.y + (disc.vec.y * dt);
 
-    if (y < 0 || y > HEIGHT) {
-      disc = disc.setIn(['vec', 'y'], -disc.vec.y);
-    }
+      if (y < 0 || y > HEIGHT) {
+        disc = disc.setIn(['vec', 'y'], -disc.vec.y);
+      }
 
-    return disc
-      .set('x', x)
-      .set('y', y);
-  });
+      return disc
+        .set('x', x)
+        .set('y', y);
+    })
+    .update((state) => {
+      const disc = state.turbodisc;
+
+      const discCollisionParams = {
+        center: {
+          x: disc.x,
+          y: disc.y,
+        },
+        size: {
+          x: DISC_SIZE,
+          y: DISC_SIZE,
+        },
+      };
+
+      if (boundingBoxIntersecting(discCollisionParams, getCollisionParams(state.rightPlayer))) {
+        if (state.rightPlayer.justThrew) {
+          return state;
+        }
+
+        return state
+          .setIn(['turbodisc', 'held'], PLAYER_RIGHT);
+
+      } else if (boundingBoxIntersecting(discCollisionParams, getCollisionParams(state.leftPlayer))) {
+        if (state.leftPlayer.justThrew) {
+          return state;
+        }
+
+        return state
+          .setIn(['turbodisc', 'held'], PLAYER_LEFT);
+
+      } else {
+        // Unset justThrew flag once the disc is out of collision box
+        return state
+          .setIn(['leftPlayer', 'justThrew'], false)
+          .setIn(['rightPlayer', 'justThrew'], false);
+      }
+    });
 }
 
 const reducer = createImmutableReducer(new State(), {

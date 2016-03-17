@@ -9,7 +9,7 @@ import FilterMonitor from 'redux-devtools-filter-actions';
 import {TICK} from '../ActionTypes';
 
 const DevTools = createDevTools(
-  <DockMonitor toggleVisibilityKey="ctrl-h" changePositionKey="ctrl-q">
+  <DockMonitor toggleVisibilityKey="ctrl-h" changePositionKey="ctrl-q" defaultIsVisible={false}>
     <FilterMonitor blacklist={[TICK]}>
       <LogMonitor theme="tomorrow" />
     </FilterMonitor>

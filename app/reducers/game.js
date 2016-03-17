@@ -55,31 +55,25 @@ const State = I.Record({
 const PLAYER_SPEED = 5;
 const INITIAL_DISC_SPEED = 15;
 
-function movePlayer(state, dt, playerKey, direction) {
+function calcVector(magnitude, rad) {
+  var x = magnitude * Math.cos(rad);
+  var y = magnitude * Math.sin(rad);
+  return { x: x, y: y };
+}
+
+function movePlayer(state, dt, playerKey, angle) {
   const speed = PLAYER_SPEED * dt;
 
+  const vec = calcVector(speed, angle);
+
   return state.update(playerKey, (player) => {
-    if (direction === MOVE_UP) {
-      return player
-        .update('y', (y) => y - speed)
-        .setIn(['lastVec', 'y'], -PLAYER_SPEED);
-    } else if (direction === MOVE_DOWN) {
-      return player
-        .update('y', (y) => y + speed)
-        .setIn(['lastVec', 'y'], PLAYER_SPEED);
-    } else if (direction === MOVE_LEFT) {
-      return player
-        .update('x', (x) => x - speed)
-        .setIn(['lastVec', 'x'], -PLAYER_SPEED);
-    } else if (direction === MOVE_RIGHT) {
-      return player
-        .update('x', (x) => x + speed)
-        .setIn(['lastVec', 'x'], PLAYER_SPEED);
-    }
+    return player
+      .update('x', (x) => x + vec.x)
+      .update('y', (y) => y + vec.y);
   });
 }
 
-function throwDisc(state, playerKey) {
+function throwDisc(state, dt, playerKey, angle) {
   if (state.turbodisc.held !== playerKey) {
     // Can't throw a disc you don't hold...
     return state;
@@ -87,16 +81,15 @@ function throwDisc(state, playerKey) {
 
   const player = state.get(playerKey);
 
-  const startingVec = player.lastVec;
+  const speed = INITIAL_DISC_SPEED;
+
+  const vec = calcVector(speed, angle);
 
   return state
     .setIn(['turbodisc', 'held'], null)
     .setIn(['turbodisc', 'x'], player.x)
     .setIn(['turbodisc', 'y'], player.y)
-    .mergeIn(['turbodisc', 'vec'], {
-      x: Math.sign(startingVec.x) * INITIAL_DISC_SPEED,
-      y: Math.sign(startingVec.y) * INITIAL_DISC_SPEED,
-    });
+    .mergeIn(['turbodisc', 'vec'], vec);
 }
 
 function updateDiscPosition(state, dt) {
@@ -115,21 +108,31 @@ const reducer = createImmutableReducer(new State(), {
       .mergeIn([PLAYER_LEFT, 'lastVec'], {x: null, y: null})
       .mergeIn([PLAYER_RIGHT, 'lastVec'], {x: null, y: null});
 
+    let xDirection = 0;
+    let yDirection = 0;
+
     if (keys.has(keyCodes.W)) {
-      state = movePlayer(state, dt, PLAYER_LEFT, MOVE_UP);
+      yDirection = -1;
     }
     if (keys.has(keyCodes.S)) {
-      state = movePlayer(state, dt, PLAYER_LEFT, MOVE_DOWN);
+      yDirection = 1;
     }
     if (keys.has(keyCodes.A)) {
-      state = movePlayer(state, dt, PLAYER_LEFT, MOVE_LEFT);
+      xDirection = -1;
     }
     if (keys.has(keyCodes.D)) {
-      state = movePlayer(state, dt, PLAYER_LEFT, MOVE_RIGHT);
+      xDirection = 1;
+    }
+
+    let angle = null;
+
+    if (!(xDirection === 0 && yDirection === 0)) {
+      angle = Math.atan2(yDirection, xDirection);
+      state = movePlayer(state, dt, PLAYER_LEFT, angle);
     }
 
     if (keys.has(keyCodes.SPACE)) {
-      state = throwDisc(state, PLAYER_LEFT);
+      state = throwDisc(state, dt, PLAYER_LEFT, angle);
     }
 
     if (!state.turbodisc.held) {

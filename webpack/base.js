@@ -14,6 +14,12 @@ module.exports = {
     createVendorChunk()
   ],
 
+  resolve: {
+    alias: {
+      '__root': process.cwd(),
+    },
+  },
+
   devtool: 'source-map',
 
   module: {

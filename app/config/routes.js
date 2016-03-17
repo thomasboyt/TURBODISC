@@ -10,5 +10,9 @@ export default (
       path="/"
       component={require('../views/Attract/Handler').default} />
 
+    <Route
+      path="/playing"
+      component={require('../views/Playing/Handler').default} />
+
   </Route>
 );

@@ -2,6 +2,8 @@ import {
   TICK,
 } from './ActionTypes';
 
+import {keysDown} from './views/lib/GlobalKeyboardHandler';
+
 class RunLoop {
   constructor() {
     this.store = null;
@@ -27,6 +29,7 @@ class RunLoop {
     this.store.dispatch({
       type: TICK,
       dt,
+      keys: keysDown,
     });
 
     this._listeners.forEach((listener) => listener());

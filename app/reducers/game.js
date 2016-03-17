@@ -186,6 +186,44 @@ function updateDiscPosition(state, dt) {
     });
 }
 
+function updateOpponent(state, dt) {
+  if (state.turbodisc.held === PLAYER_RIGHT) {
+    return throwDisc(state, dt, PLAYER_RIGHT, Math.atan2(0, -1));
+  }
+  
+  const speed = PLAYER_SPEED * dt;
+
+  let target;
+  if (state.turbodisc.held === PLAYER_LEFT) {
+    target = {
+      x: state.leftPlayer.x,
+      y: state.leftPlayer.y,
+    };
+
+  } else {
+    target = {
+      x: state.turbodisc.x,
+      y: state.turbodisc.y,
+    };
+  }
+
+  if (target.y > state.rightPlayer.y) {
+    return state.update(PLAYER_RIGHT, (player) => {
+      return player
+        .update('y', (y) => y + speed);
+    });
+
+  } else if (target.y < state.rightPlayer.y) {
+    return state.update(PLAYER_RIGHT, (player) => {
+      return player
+        .update('y', (y) => y - speed);
+    });
+
+  } else {
+    return state;
+  }
+}
+
 const reducer = createImmutableReducer(new State(), {
   [TICK]: ({dt, keys}, state) => {
     dt = dt / 100;
@@ -224,6 +262,8 @@ const reducer = createImmutableReducer(new State(), {
     if (!state.turbodisc.held) {
       state = updateDiscPosition(state, dt);
     }
+
+    state = updateOpponent(state, dt);
 
     return state;
   },

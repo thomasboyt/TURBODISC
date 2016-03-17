@@ -22,7 +22,6 @@ const Vector = I.Record({
 const Player = I.Record({
   x: null,
   y: null,
-  lastVec: new Vector(),
   side: null,
 });
 
@@ -79,6 +78,11 @@ function throwDisc(state, dt, playerKey, angle) {
     return state;
   }
 
+  if (angle === null) {
+    // TODO: throw straight up
+    return state;
+  }
+
   const player = state.get(playerKey);
 
   const speed = INITIAL_DISC_SPEED;
@@ -94,9 +98,16 @@ function throwDisc(state, dt, playerKey, angle) {
 
 function updateDiscPosition(state, dt) {
   return state.update('turbodisc', (disc) => {
+    const x = disc.x + (disc.vec.x * dt);
+    const y = disc.y + (disc.vec.y * dt);
+
+    if (y < 0 || y > 224) {
+      disc = disc.setIn(['vec', 'y'], -disc.vec.y);
+    }
+
     return disc
-      .set('x', disc.x + (disc.vec.x * dt))
-      .set('y', disc.y + (disc.vec.y * dt));
+      .set('x', x)
+      .set('y', y);
   });
 }
 
@@ -104,9 +115,7 @@ const reducer = createImmutableReducer(new State(), {
   [TICK]: ({dt, keys}, state) => {
     dt = dt / 100;
 
-    state = state
-      .mergeIn([PLAYER_LEFT, 'lastVec'], {x: null, y: null})
-      .mergeIn([PLAYER_RIGHT, 'lastVec'], {x: null, y: null});
+    // Handle player input
 
     let xDirection = 0;
     let yDirection = 0;
@@ -134,6 +143,8 @@ const reducer = createImmutableReducer(new State(), {
     if (keys.has(keyCodes.SPACE)) {
       state = throwDisc(state, dt, PLAYER_LEFT, angle);
     }
+
+    // Update positions
 
     if (!state.turbodisc.held) {
       state = updateDiscPosition(state, dt);

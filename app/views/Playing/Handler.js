@@ -5,6 +5,11 @@ import RenderedCanvas from '../lib/RenderedCanvas';
 import GlobalKeyboardHandler from '../lib/GlobalKeyboardHandler';
 
 import {
+  WIDTH,
+  HEIGHT,
+} from '__root/app/constants';
+
+import {
   PLAYER_LEFT,
   PLAYER_RIGHT,
 } from '__root/app/reducers/game';
@@ -50,7 +55,7 @@ const Playing = React.createClass({
   renderCanvas(ctx) {
     ctx.fillStyle = '#ccc';
 
-    ctx.fillRect(0, 0, 320, 224);
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
     this.drawPlayer(ctx, this.props.leftPlayer);
     this.drawPlayer(ctx, this.props.rightPlayer);
 
@@ -62,7 +67,7 @@ const Playing = React.createClass({
   render() {
     return (
       <GlobalKeyboardHandler>
-        <RenderedCanvas render={this.renderCanvas} width="320" height="224" />
+        <RenderedCanvas render={this.renderCanvas} width={WIDTH} height={HEIGHT} />
       </GlobalKeyboardHandler>
     );
   }

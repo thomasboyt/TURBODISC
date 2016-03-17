@@ -6,6 +6,10 @@ import {
   TICK,
 } from '../ActionTypes';
 
+import {
+  HEIGHT,
+} from '__root/app/constants';
+
 export const PLAYER_LEFT = 'leftPlayer';
 export const PLAYER_RIGHT = 'rightPlayer';
 
@@ -101,7 +105,7 @@ function updateDiscPosition(state, dt) {
     const x = disc.x + (disc.vec.x * dt);
     const y = disc.y + (disc.vec.y * dt);
 
-    if (y < 0 || y > 224) {
+    if (y < 0 || y > HEIGHT) {
       disc = disc.setIn(['vec', 'y'], -disc.vec.y);
     }
 
